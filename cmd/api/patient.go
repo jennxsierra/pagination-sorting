@@ -121,7 +121,7 @@ func (a *applicationDependencies) listPatientsHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	patients, err := a.models.Patient.GetAll(
+	patients, metadata, err := a.models.Patient.GetAll(
 		queryParametersData.FirstName,
 		queryParametersData.LastName,
 		queryParametersData.Filters)
@@ -131,7 +131,8 @@ func (a *applicationDependencies) listPatientsHandler(w http.ResponseWriter, r *
 	}
 
 	resp := envelope{
-		"patients": patients,
+		"patients":  patients,
+		"@metadata": metadata,
 	}
 	err = a.writeJSON(w, http.StatusOK, resp, nil)
 	if err != nil {

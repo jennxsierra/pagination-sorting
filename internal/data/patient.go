@@ -82,12 +82,13 @@ func (m PatientModel) Get(patientNo string) (*Patient, error) {
 }
 
 // Get specific patients based on the query parameters (first_name, last_name, and pagination)
-func (m PatientModel) GetAll(firstName string, lastName string, filters Filters) ([]*Patient, error) {
+func (m PatientModel) GetAll(firstName string, lastName string, filters Filters) ([]*Patient, Metadata, error) {
 	// $? = '' allows for firstName and lastName to be optional
 	// $3 and $4 are LIMIT and OFFSET for pagination
 	query := `
         SELECT 
-            pa.patient_id, pa.patient_no, pa.ssn, 
+			COUNT(*) OVER(),
+			pa.patient_id, pa.patient_no, pa.ssn, 
             pe.first_name, pe.last_name, pe.date_of_birth, pe.gender, pe.created_at
         FROM patient pa
         JOIN person pe ON pa.patient_id = pe.person_id
@@ -103,22 +104,32 @@ func (m PatientModel) GetAll(firstName string, lastName string, filters Filters)
 
 	rows, err := m.DB.QueryContext(ctx, query, firstName, lastName, filters.limit(), filters.offset())
 	if err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
 	defer rows.Close()
 
+	totalRecords := 0
 	var results []*Patient
 	for rows.Next() {
 		var p Patient
 		err := rows.Scan(
+			&totalRecords,
 			&p.PatientID, &p.PatientNo, &p.SSN,
 			&p.FirstName, &p.LastName, &p.DateOfBirth, &p.Gender, &p.CreatedAt)
 		if err != nil {
-			return nil, err
+			return nil, Metadata{}, err
 		}
 		results = append(results, &p)
 	}
-	return results, rows.Err()
+
+	err = rows.Err()
+	if err != nil {
+		return nil, Metadata{}, err
+	}
+
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
+
+	return results, metadata, nil
 }
 
 // Update patient info (PATCH semantics: update only provided non-nil fields)
