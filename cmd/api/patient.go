@@ -114,6 +114,12 @@ func (a *applicationDependencies) listPatientsHandler(w http.ResponseWriter, r *
 	queryParametersData.Filters.PageSize = a.getSingleIntegerParameter(
 		queryParameters, "page_size", 10, v)
 
+	queryParametersData.Filters.Sort = a.getSingleQueryParameter(
+		queryParameters, "sort", "patient_id")
+
+	queryParametersData.Filters.SortSafeList = []string{"patient_id", "first_name", "last_name",
+		"created_at", "-patient_id", "-first_name", "-last_name", "-created_at"}
+
 	// Check if our filters are valid
 	data.ValidateFilters(v, queryParametersData.Filters)
 	if !v.IsEmpty() {

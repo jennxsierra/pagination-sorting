@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jennxsierra/lab4-db-crud-implementation/internal/validator"
@@ -85,7 +86,7 @@ func (m PatientModel) Get(patientNo string) (*Patient, error) {
 func (m PatientModel) GetAll(firstName string, lastName string, filters Filters) ([]*Patient, Metadata, error) {
 	// $? = '' allows for firstName and lastName to be optional
 	// $3 and $4 are LIMIT and OFFSET for pagination
-	query := `
+	query := fmt.Sprintf(`
         SELECT 
 			COUNT(*) OVER(),
 			pa.patient_id, pa.patient_no, pa.ssn, 
@@ -96,9 +97,9 @@ func (m PatientModel) GetAll(firstName string, lastName string, filters Filters)
               plainto_tsquery('simple', $1) OR $1 = '') 
         AND (to_tsvector('simple', pe.last_name) @@ 
              plainto_tsquery('simple', $2) OR $2 = '') 
-        ORDER BY pa.patient_id
+        ORDER BY %s %s, pa.patient_id ASC
         LIMIT $3 OFFSET $4
-    `
+    `, filters.sortColumn(), filters.sortDirection())
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
