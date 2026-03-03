@@ -3,7 +3,7 @@ package data
 import (
 	"strings"
 
-	"github.com/jennxsierra/lab4-db-crud-implementation/internal/validator"
+	"github.com/jennxsierra/pagination-sorting/internal/validator"
 )
 
 // The Filters type will contain the fields related to pagination

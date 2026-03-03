@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/jennxsierra/lab4-db-crud-implementation/internal/data"
+	"github.com/jennxsierra/pagination-sorting/internal/data"
 	_ "github.com/lib/pq"
 )
 
@@ -52,11 +52,11 @@ func main() {
 	defer db.Close()
 
 	logger.Info("database connection pool established")
-	   appInstance := &applicationDependencies{
-		   config: settings,
-		   logger: logger,
-		   models: data.NewModels(db),
-	   }
+	appInstance := &applicationDependencies{
+		config: settings,
+		logger: logger,
+		models: data.NewModels(db),
+	}
 
 	apiServer := &http.Server{
 		Addr:         fmt.Sprintf(":%d", settings.port),

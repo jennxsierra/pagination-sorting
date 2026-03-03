@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jennxsierra/lab4-db-crud-implementation/internal/validator"
+	"github.com/jennxsierra/pagination-sorting/internal/validator"
 )
 
 // create an envelope type

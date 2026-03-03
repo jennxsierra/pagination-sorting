@@ -1,4 +1,4 @@
-module github.com/jennxsierra/lab4-db-crud-implementation
+module github.com/jennxsierra/pagination-sorting
 
 go 1.25.6
 

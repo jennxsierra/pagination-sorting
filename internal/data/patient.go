@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jennxsierra/lab4-db-crud-implementation/internal/validator"
+	"github.com/jennxsierra/pagination-sorting/internal/validator"
 )
 
 type Patient struct {

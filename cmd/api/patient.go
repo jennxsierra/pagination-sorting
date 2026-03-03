@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/jennxsierra/lab4-db-crud-implementation/internal/data"
-	"github.com/jennxsierra/lab4-db-crud-implementation/internal/validator"
+	"github.com/jennxsierra/pagination-sorting/internal/data"
+	"github.com/jennxsierra/pagination-sorting/internal/validator"
 	"github.com/julienschmidt/httprouter"
 )
 
