@@ -84,12 +84,13 @@ func (a *applicationDependencies) showPatientHandler(w http.ResponseWriter, r *h
 	}
 }
 
-// GET /v1/patients?first_name=...&last_name=... -- list all (optionally filtered)
+// GET /v1/patients?first_name=...&last_name=...&page=...&page_size=... -- list all (optionally filtered and paginated)
 func (a *applicationDependencies) listPatientsHandler(w http.ResponseWriter, r *http.Request) {
 	// Create a struct to hold the query parameters
 	var queryParametersData struct {
 		FirstName string
 		LastName  string
+		data.Filters
 	}
 
 	// get the query parameters from the URL
@@ -106,18 +107,33 @@ func (a *applicationDependencies) listPatientsHandler(w http.ResponseWriter, r *
 		"last_name",
 		"")
 
+	// Create a new validator instance
+	v := validator.New()
+	queryParametersData.Filters.Page = a.getSingleIntegerParameter(
+		queryParameters, "page", 1, v)
+	queryParametersData.Filters.PageSize = a.getSingleIntegerParameter(
+		queryParameters, "page_size", 10, v)
+
+	// Check if our filters are valid
+	data.ValidateFilters(v, queryParametersData.Filters)
+	if !v.IsEmpty() {
+		a.errorResponseJSON(w, r, http.StatusUnprocessableEntity, v.Errors)
+		return
+	}
+
 	patients, err := a.models.Patient.GetAll(
 		queryParametersData.FirstName,
-		queryParametersData.LastName)
+		queryParametersData.LastName,
+		queryParametersData.Filters)
 	if err != nil {
 		a.serverErrorResponse(w, r, err)
 		return
 	}
 
-	data := envelope{
+	resp := envelope{
 		"patients": patients,
 	}
-	err = a.writeJSON(w, http.StatusOK, data, nil)
+	err = a.writeJSON(w, http.StatusOK, resp, nil)
 	if err != nil {
 		a.serverErrorResponse(w, r, err)
 	}

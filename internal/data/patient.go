@@ -81,9 +81,10 @@ func (m PatientModel) Get(patientNo string) (*Patient, error) {
 	return &p, nil
 }
 
-// Get specific patients based on the query parameters (first_name and last_name)
-func (m PatientModel) GetAll(firstName string, lastName string) ([]*Patient, error) {
+// Get specific patients based on the query parameters (first_name, last_name, and pagination)
+func (m PatientModel) GetAll(firstName string, lastName string, filters Filters) ([]*Patient, error) {
 	// $? = '' allows for firstName and lastName to be optional
+	// $3 and $4 are LIMIT and OFFSET for pagination
 	query := `
         SELECT 
             pa.patient_id, pa.patient_no, pa.ssn, 
@@ -95,11 +96,12 @@ func (m PatientModel) GetAll(firstName string, lastName string) ([]*Patient, err
         AND (to_tsvector('simple', pe.last_name) @@ 
              plainto_tsquery('simple', $2) OR $2 = '') 
         ORDER BY pa.patient_id
+        LIMIT $3 OFFSET $4
     `
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	rows, err := m.DB.QueryContext(ctx, query, firstName, lastName)
+	rows, err := m.DB.QueryContext(ctx, query, firstName, lastName, filters.limit(), filters.offset())
 	if err != nil {
 		return nil, err
 	}
