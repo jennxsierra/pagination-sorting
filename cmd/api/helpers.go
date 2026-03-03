@@ -6,7 +6,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
+
+	"github.com/jennxsierra/lab4-db-crud-implementation/internal/validator"
 )
 
 // create an envelope type
@@ -110,4 +114,51 @@ func (a *applicationDependencies) readJSON(w http.ResponseWriter,
 	}
 
 	return nil
+}
+
+// getSingleQueryParameter retrieves a single query parameter from the URL
+// url.Values is a key:value hash map of the query parameters
+func (a *applicationDependencies) getSingleQueryParameter(
+	queryParameters url.Values,
+	key string,
+	defaultValue string) string {
+	result := queryParameters.Get(key)
+	if result == "" {
+		return defaultValue
+	}
+	return result
+}
+
+// getMultipleQueryParameters retrieves comma-separated query parameters from the URL
+func (a *applicationDependencies) getMultipleQueryParameters(
+	queryParameters url.Values,
+	key string,
+	defaultValue []string) []string {
+	result := queryParameters.Get(key)
+	if result == "" {
+		return defaultValue
+	}
+	return strings.Split(result, ",")
+}
+
+// getSingleIntegerParameter retrieves an integer parameter from the URL
+// This method can cause a validation error when trying to convert the
+// string to a valid integer value
+func (a *applicationDependencies) getSingleIntegerParameter(
+	queryParameters url.Values,
+	key string,
+	defaultValue int,
+	v *validator.Validator) int {
+	result := queryParameters.Get(key)
+	if result == "" {
+		return defaultValue
+	}
+	// try to convert to an integer
+	intValue, err := strconv.Atoi(result)
+	if err != nil {
+		v.AddError(key, "must be an integer value")
+		return defaultValue
+	}
+
+	return intValue
 }

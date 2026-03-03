@@ -84,17 +84,40 @@ func (a *applicationDependencies) showPatientHandler(w http.ResponseWriter, r *h
 	}
 }
 
-// GET /v1/patients?name=... -- list all (optionally filtered by name)
+// GET /v1/patients?first_name=...&last_name=... -- list all (optionally filtered)
 func (a *applicationDependencies) listPatientsHandler(w http.ResponseWriter, r *http.Request) {
-	name := r.URL.Query().Get("name")
+	// Create a struct to hold the query parameters
+	var queryParametersData struct {
+		FirstName string
+		LastName  string
+	}
 
-	patients, err := a.models.Patient.GetAll(name)
+	// get the query parameters from the URL
+	queryParameters := r.URL.Query()
+
+	// Load the query parameters into our struct
+	queryParametersData.FirstName = a.getSingleQueryParameter(
+		queryParameters,
+		"first_name",
+		"")
+
+	queryParametersData.LastName = a.getSingleQueryParameter(
+		queryParameters,
+		"last_name",
+		"")
+
+	patients, err := a.models.Patient.GetAll(
+		queryParametersData.FirstName,
+		queryParametersData.LastName)
 	if err != nil {
 		a.serverErrorResponse(w, r, err)
 		return
 	}
 
-	err = a.writeJSON(w, http.StatusOK, envelope{"patients": patients}, nil)
+	data := envelope{
+		"patients": patients,
+	}
+	err = a.writeJSON(w, http.StatusOK, data, nil)
 	if err != nil {
 		a.serverErrorResponse(w, r, err)
 	}

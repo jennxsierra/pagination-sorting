@@ -81,20 +81,25 @@ func (m PatientModel) Get(patientNo string) (*Patient, error) {
 	return &p, nil
 }
 
-// List all patients, optionally filtering by name
-func (m PatientModel) GetAll(name string) ([]*Patient, error) {
+// Get specific patients based on the query parameters (first_name and last_name)
+func (m PatientModel) GetAll(firstName string, lastName string) ([]*Patient, error) {
+	// $? = '' allows for firstName and lastName to be optional
 	query := `
         SELECT 
             pa.patient_id, pa.patient_no, pa.ssn, 
             pe.first_name, pe.last_name, pe.date_of_birth, pe.gender, pe.created_at
         FROM patient pa
         JOIN person pe ON pa.patient_id = pe.person_id
-        WHERE ($1 = '' OR pe.first_name ILIKE '%' || $1 || '%' OR pe.last_name ILIKE '%' || $1 || '%')
-        ORDER BY pa.patient_no ASC
+        WHERE (to_tsvector('simple', pe.first_name) @@
+              plainto_tsquery('simple', $1) OR $1 = '') 
+        AND (to_tsvector('simple', pe.last_name) @@ 
+             plainto_tsquery('simple', $2) OR $2 = '') 
+        ORDER BY pa.patient_id
     `
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	rows, err := m.DB.QueryContext(ctx, query, name)
+
+	rows, err := m.DB.QueryContext(ctx, query, firstName, lastName)
 	if err != nil {
 		return nil, err
 	}
